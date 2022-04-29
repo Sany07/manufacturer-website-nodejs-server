@@ -49,21 +49,18 @@ async function run() {
         //     res.send({ accessToken });
         // })
 
-        // SERVICES API
-        // app.get('/service', async (req, res) => {
-        //     const query = {};
-        //     const cursor = serviceCollection.find(query);
-        //     const services = await cursor.toArray();
-        //     res.send(services);
-        // });
 
-        // app.get('/service/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     console.log(id);
-        //     const query = { _id: ObjectId(id) };
-        //     const service = await serviceCollection.findOne(query);
-        //     res.send(service);
-        // });
+
+        // GET
+        app.get('/product/:id', async (req, res,next) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const product = await productsCollection.findOne(query);
+            res.send(product);
+            console.log(query);
+
+            next()
+        });
 
         // POST
         app.post('/product', async (req, res) => {
@@ -72,13 +69,15 @@ async function run() {
             res.send(result);
         });
 
-        // // DELETE
-        // app.delete('/service/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const query = { _id: ObjectId(id) };
-        //     const result = await serviceCollection.deleteOne(query);
-        //     res.send(result);
-        // });
+        // DELETE
+        app.delete('/product/:id', async (req, res,next) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await productsCollection.deleteOne(query);
+            res.send(result);
+            console.log(query);
+            next()
+        });
 
         // // Order Collection API
 
