@@ -49,15 +49,27 @@ async function run() {
         //     res.send({ accessToken });
         // })
 
-
+        // Products API
+        app.get('/product', async (req, res) => {
+            const query = {};
+            const cursor = productsCollection.find();
+            const products = await cursor.toArray();
+            res.send(products);
+        });
 
         // GET
         app.get('/product/:id', async (req, res,next) => {
             const id = req.params.id;
+            try{
             const query = { _id: ObjectId(id) };
-            const product = await productsCollection.findOne(query);
-            res.send(product);
-            console.log(query);
+            if(query){
+                const product = await productsCollection.findOne(query);
+                res.send(product);
+            }}catch{
+                res.status(404).send({ message: 'Not Found' });  
+            }
+
+       
 
             next()
         });
