@@ -13,11 +13,17 @@ app.use(express.json());
 
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
+    console.log('authHeader',authHeader);
     if (!authHeader) {
+
         return res.status(401).send({ message: 'unauthorized access' });
     }
+    console.log('token');
+
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    console.log('token',token);
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
             return res.status(403).send({ message: 'Forbidden access' });
         }
@@ -41,13 +47,13 @@ async function run() {
         // const orderCollection = client.db('geniusCar').collection('order');
 
         // AUTH
-        // app.post('/login', async (req, res) => {
-        //     const user = req.body;
-        //     const accessToken = jwt.sign(user, process.env.JWT_SECRET, {
-        //         expiresIn: process.env.JwtExpiresIn
-        //     });
-        //     res.send({ accessToken });
-        // })
+        app.post('/login', async (req, res) => {
+            const user = req.body;
+            const accessToken = jwt.sign(user, process.env.JWT_SECRET, {
+                expiresIn: process.env.JwtExpiresIn
+            });
+            res.send({ accessToken });
+        })
 
         // Products API
         app.get('/product', async (req, res) => {
@@ -69,16 +75,53 @@ async function run() {
                 res.status(404).send({ message: 'Not Found' });  
             }
 
-       
-
             next()
         });
-
+        app.put('/product/:id', async (req, res,next) => {
+            const id = req.params.id;
+            const quantity =req.body.quantity
+            const sold =req.body.sold
+         
+            try{
+                const resp =await productsCollection.updateOne({
+                    _id: ObjectId(id)
+                }, {
+                    $set: {
+                        quantity: quantity,
+                        sold:sold
+                    }
+                })
+                if(resp.acknowledged==true){
+                    const product = await productsCollection.findOne(ObjectId(id));
+                    res.status(200).send({status:201, message: 'Item Delevered',product });
+                }else{
+                    res.status(404).send({ message: 'Not Found' });  
+                }
+            }
+            catch{
+                res.status(404).send({ message: 'Something Went Wrong' });  
+                   
+                }
+    
+            next()
+        });
         // POST
-        app.post('/product', async (req, res) => {
+        app.post('/product', verifyJWT, async (req, res) => {
             const newProduct = req.body;
-            const result = await productsCollection.insertOne(newProduct);
-            res.send(result);
+            const email =req.decoded.email
+            if(!email){
+                return res.status(401).send({ message: 'unauthorized access' }); 
+            }
+            const data = {
+                sold:0,
+                email:email,
+                ...newProduct
+            }
+            
+            const result = await productsCollection.insertOne(data);
+            if(result.acknowledged === true){
+                res.status(201).send({status:201, message: 'Item Added',result });
+            }
         });
 
         // DELETE
