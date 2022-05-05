@@ -134,21 +134,22 @@ async function run() {
             next()
         });
 
-        // // Order Collection API
+        // // My Itens Collection API
 
-        // app.get('/order', verifyJWT, async (req, res) => {
-        //     const decodedEmail = req.decoded.email;
-        //     const email = req.query.email;
-        //     if (email === decodedEmail) {
-        //         const query = { email: email };
-        //         const cursor = orderCollection.find(query);
-        //         const orders = await cursor.toArray();
-        //         res.send(orders);
-        //     }
-        //     else{
-        //         res.status(403).send({message: 'forbidden access'})
-        //     }
-        // })
+        app.get('/myproducts', verifyJWT, async (req, res) => {
+            const decodedEmail = req.decoded.email;
+            console.log('decodedEmail',decodedEmail);
+            
+            if (decodedEmail) {
+                const query = { email: decodedEmail };
+                const cursor = productsCollection.find(query);
+                const products = await cursor.toArray();
+                res.send(products);
+            }
+            else{
+                res.status(403).send({message: 'forbidden access'})
+            }
+        })
 
         // app.post('/order', async (req, res) => {
         //     const order = req.body;
