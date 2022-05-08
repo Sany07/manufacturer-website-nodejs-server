@@ -150,13 +150,6 @@ async function run() {
                 res.status(403).send({message: 'forbidden access'})
             }
         })
-
-        // app.post('/order', async (req, res) => {
-        //     const order = req.body;
-        //     const result = await orderCollection.insertOne(order);
-        //     res.send(result);
-        // })
-
     }
     finally {
 
@@ -166,12 +159,8 @@ async function run() {
 run().catch('s',console.dir);
 
 app.get('/', (req, res) => {
-    res.send('Running Genius Server');
+    res.send('Running OutDoorGadget Server');
 });
-
-app.get('/hi', (req, res) =>{
-    res.send('Hero meets hero ku')
-})
 
 app.listen(port, () => {
     console.log('Listening to port', `http//localhost:${port}`);
