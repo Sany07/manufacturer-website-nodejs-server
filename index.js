@@ -44,8 +44,6 @@ async function run() {
     try {
         await client.connect();
         const productsCollection = client.db('wh-db').collection('products');
-        // const orderCollection = client.db('geniusCar').collection('order');
-
         // AUTH
         app.post('/login', async (req, res) => {
             const user = req.body;
@@ -134,8 +132,7 @@ async function run() {
             next()
         });
 
-        // // My Itens Collection API
-
+        // My Itens Collection API
         app.get('/myproducts', verifyJWT, async (req, res) => {
             const decodedEmail = req.decoded.email;
             console.log('decodedEmail',decodedEmail);
