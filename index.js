@@ -13,21 +13,16 @@ app.use(express.json());
 
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
-    console.log('authHeader',authHeader);
+    
     if (!authHeader) {
 
         return res.status(401).send({ message: 'unauthorized access' });
     }
-    console.log('token');
-
     const token = authHeader.split(' ')[1];
-    console.log('token',token);
-
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
             return res.status(403).send({ message: 'Forbidden access' });
         }
-        console.log('decoded', decoded);
         req.decoded = decoded;
         next();
     })
@@ -46,14 +41,32 @@ async function run() {
         const productsCollection = client.db('ss-manu').collection('products');
         const orderCollection = client.db('ss-manu').collection('orders');
         const reviewCollection = client.db('ss-manu').collection('review');
+        const userprofileCollection = client.db('ss-manu').collection('userprofile');
         // AUTH
         app.post('/login', async (req, res) => {
             const user = req.body;
             const accessToken = jwt.sign(user, process.env.JWT_SECRET, {
                 expiresIn: process.env.JwtExpiresIn
             });
+            const {email} = user
+            const role = "user"
+            const uData ={
+                email,
+                role 
+            }
+            console.log(email);
+            await userprofileCollection.insertOne(uData);
             res.send({ accessToken });
         })
+
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userprofileCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+          })
+
+
 
         // Products API
         app.get('/products', async (req, res) => {
@@ -169,6 +182,46 @@ async function run() {
             }else{
                 return res.send({ message: "Error" });
             }
+        });
+        app.get('/userupdate',verifyJWT, async (req, res,next) => {
+            
+            const decodedEmail = req.decoded.email;
+     
+            if (decodedEmail) {
+            
+                const query = { email: decodedEmail };
+                const profile = userprofileCollection.find(query);
+                const user = await profile.toArray();
+                res.send(user);
+            }
+            next()
+        });
+        app.put('/userupdate',verifyJWT, async (req, res,next) => {
+            
+            const decodedEmail = req.decoded.email;
+            const userInfo = req.body;
+            console.log("decodedEmail", req.body);
+            if (decodedEmail) {
+            try{
+                const resp =await userprofileCollection.updateOne({
+                    email: decodedEmail
+                }, {
+                    $set: {
+                        ...userInfo
+                    }
+                })
+                if(resp.acknowledged==true){
+                    res.status(200).send({status:201, message: 'Updated' });
+                }else{
+                    res.status(404).send({ message: 'Not Found' });  
+                }
+            }
+            catch{
+                res.status(404).send({ message: 'Something Went Wrong' });  
+                   
+                }
+            }
+            next()
         });
 
     }
