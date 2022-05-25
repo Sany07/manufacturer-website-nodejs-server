@@ -44,6 +44,7 @@ async function run() {
         const orderCollection = client.db('ss-manu').collection('orders');
         const reviewCollection = client.db('ss-manu').collection('review');
         const userprofileCollection = client.db('ss-manu').collection('userprofile');
+        const paymentCollection = client.db('ss-manu').collection('payment');
 
 
         const verifyAdmin = async (req, res, next) => {
@@ -203,7 +204,7 @@ async function run() {
                 transactionId: payment.transactionId
               }
             }
-            // const result = await paymentCollection.insertOne(payment);
+            const result = await paymentCollection.insertOne(payment);
             const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
             res.send(updatedOrder);
         })
