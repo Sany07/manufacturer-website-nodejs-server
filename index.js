@@ -93,8 +93,6 @@ async function run() {
             res.send({ admin: isAdmin })
           })
 
-
-
         // Products API
         app.get('/products', async (req, res) => {
             const query = {};
@@ -197,6 +195,7 @@ async function run() {
         app.patch('/order/:id', verifyJWT, async(req, res) =>{
             const id  = req.params.id;
             const payment = req.body;
+            console.log(payment);
             const filter = {_id: ObjectId(id)};
             const updatedDoc = {
               $set: {
@@ -205,6 +204,18 @@ async function run() {
               }
             }
             const result = await paymentCollection.insertOne(payment);
+            const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedOrder);
+        })
+        app.put('/order/approve/:id', verifyJWT, async(req, res) =>{
+            const id  = req.params.id;
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc = {
+              $set: {
+                approve: true,
+                
+              }
+            }
             const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
             res.send(updatedOrder);
         })
@@ -240,7 +251,13 @@ async function run() {
                 return res.send({ message: "Not Found" });
             }
         });
-
+        app.get('/reviews', async (req, res) => {
+            
+            const cursor = reviewCollection.find();
+            const reviews = await cursor.toArray();
+            res.send(reviews.reverse());
+            }
+        );
         app.post('/review', async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
@@ -262,7 +279,7 @@ async function run() {
             res.send({ admin: isAdmin })
           })
       
-          app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = {
