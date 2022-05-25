@@ -3,6 +3,8 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 const port = process.env.PORT || 5000;
 
 const app = express();
@@ -55,6 +57,17 @@ async function run() {
             }
           }
 
+        app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
+            const order = req.body;
+            const price = order.price;
+            const amount = price*100;
+            const paymentIntent = await stripe.paymentIntents.create({
+              amount : amount,
+              currency: 'usd',
+              payment_method_types:['card']
+            });
+            res.send({clientSecret: paymentIntent.client_secret})
+          });
 
         // AUTH
         app.post('/login', async (req, res) => {
@@ -68,7 +81,6 @@ async function run() {
                 email,
                 role 
             }
-            console.log(email);
             await userprofileCollection.insertOne(uData);
             res.send({ accessToken });
         })
@@ -173,7 +185,28 @@ async function run() {
             console.log('query',query,result);
             next()
         });
-
+        // order
+        
+        app.get('/order/:id', verifyJWT, async(req, res) =>{
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const booking = await orderCollection.findOne(query);
+            res.send(booking);
+        })
+        app.patch('/order/:id', verifyJWT, async(req, res) =>{
+            const id  = req.params.id;
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc = {
+              $set: {
+                paid: true,
+                transactionId: payment.transactionId
+              }
+            }
+            // const result = await paymentCollection.insertOne(payment);
+            const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedOrder);
+        })
         // My Order Collection API  verifyJWT
         app.get('/myorder',verifyJWT, async (req, res) => {
             const decodedEmail = req.decoded.email;
