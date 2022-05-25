@@ -42,6 +42,20 @@ async function run() {
         const orderCollection = client.db('ss-manu').collection('orders');
         const reviewCollection = client.db('ss-manu').collection('review');
         const userprofileCollection = client.db('ss-manu').collection('userprofile');
+
+
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userprofileCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+              next();
+            }
+            else {
+              res.status(403).send({ message: 'forbidden' });
+            }
+          }
+
+
         // AUTH
         app.post('/login', async (req, res) => {
             const user = req.body;
@@ -73,9 +87,14 @@ async function run() {
             const query = {};
             const cursor = productsCollection.find();
             const products = await cursor.toArray();
-            res.send(products);
+            res.send(products.reverse());
         });
-
+        // Add Product
+        app.post('/product', verifyJWT, verifyAdmin, async (req, res) => {
+            const product = req.body;
+            const result = await productsCollection.insertOne(product);
+            res.status(201).send({status:201, message: 'Item Added',product });
+          });
         // GET
         app.get('/product/:id', async (req, res,next) => {
             const id = req.params.id;
@@ -183,6 +202,27 @@ async function run() {
                 return res.send({ message: "Error" });
             }
         });
+
+        app.get('/users', verifyJWT, async (req, res) => {
+            const users = await userprofileCollection.find().toArray();
+            res.send(users);
+          });
+          app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userprofileCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+          })
+      
+          app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+              $set: { role: 'admin' },
+            };
+            const result = await userprofileCollection.updateOne(filter, updateDoc);
+            res.send(result);
+          })
         app.get('/userupdate',verifyJWT, async (req, res,next) => {
             
             const decodedEmail = req.decoded.email;
@@ -196,7 +236,7 @@ async function run() {
             }
             next()
         });
-        app.put('/userupdate',verifyJWT, async (req, res,next) => {
+        app.patch('/userupdate',verifyJWT, async (req, res,next) => {
             
             const decodedEmail = req.decoded.email;
             const userInfo = req.body;
