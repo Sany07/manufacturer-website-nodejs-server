@@ -44,6 +44,35 @@ async function run() {
         const userprofileCollection = client.db('ss-manu').collection('userprofile');
 
 
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userprofileCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+              next();
+            }
+            else {
+              res.status(403).send({ message: 'forbidden' });
+            }
+          }
+
+
+        // AUTH
+        app.post('/login', async (req, res) => {
+            const user = req.body;
+            const accessToken = jwt.sign(user, process.env.JWT_SECRET, {
+                expiresIn: process.env.JwtExpiresIn
+            });
+            const {email} = user
+            const role = "user"
+            const uData ={
+                email,
+                role 
+            }
+            console.log(email);
+            await userprofileCollection.insertOne(uData);
+            res.send({ accessToken });
+        })
+
 
 
     }
