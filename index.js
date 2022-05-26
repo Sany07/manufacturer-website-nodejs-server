@@ -338,7 +338,7 @@ async function run() {
 run().catch('s',console.dir);
 
 app.get('/', (req, res) => {
-    res.send('Running OutDoorGadget Server');
+    res.send('Running ss-manufucturer Server');
 });
 
 app.listen(port, () => {
