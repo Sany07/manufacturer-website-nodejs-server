@@ -2,7 +2,6 @@
 # OutDoorGadget
 
 <a href="https://ss-manu09.herokuapp.com/">Live Link</a>
-
 ```
 Apis
 ```
